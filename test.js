@@ -1,6 +1,7 @@
 import fs from 'fs';
 import test from 'ava';
 import tempy from 'tempy';
+import {Volume} from 'memfs';
 import writeJsonFile from '.';
 
 test('async', async t => {
@@ -74,4 +75,30 @@ test('sync - respect trailing newline at the end of the file', t => {
 	fs.writeFileSync(tempFile, JSON.stringify({foo: true}));
 	writeJsonFile.sync(tempFile, {bar: true});
 	t.is(fs.readFileSync(tempFile, 'utf8'), '{\n\t"bar": true\n}');
+});
+
+test('async - custom fs', async t => {
+	const fs = new Volume();
+
+	// Till memfs binds
+	Object.entries(Volume.prototype).forEach(([name, fn]) => {
+		fs[name] = fn.bind(fs);
+	});
+
+	const tempFile = '/test/temp.json';
+	await writeJsonFile(tempFile, {foo: true}, {indent: 2, fs});
+	t.is(fs.readFileSync(tempFile, 'utf8'), '{\n  "foo": true\n}\n');
+});
+
+test('sync - custom fs', t => {
+	const fs = new Volume();
+
+	// Till memfs binds
+	Object.entries(Volume.prototype).forEach(([name, fn]) => {
+		fs[name] = fn.bind(fs);
+	});
+
+	const tempFile = '/temp.json';
+	writeJsonFile.sync(tempFile, {foo: true}, {detectIndent: true, indent: 2, fs});
+	t.is(fs.readFileSync(tempFile, 'utf8'), '{\n  "foo": true\n}\n');
 });

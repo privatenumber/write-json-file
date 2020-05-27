@@ -8,8 +8,6 @@ const makeDir = require('make-dir');
 const detectIndent = require('detect-indent');
 const isPlainObj = require('is-plain-obj');
 
-const readFile = promisify(fs.readFile);
-
 const init = (fn, filePath, data, options) => {
 	if (!filePath) {
 		throw new TypeError('Expected a filepath');
@@ -22,6 +20,7 @@ const init = (fn, filePath, data, options) => {
 	options = {
 		indent: '\t',
 		sortKeys: false,
+		fs,
 		...options
 	};
 
@@ -36,6 +35,11 @@ const init = (fn, filePath, data, options) => {
 };
 
 const main = async (filePath, data, options) => {
+	const {fs} = options;
+
+	await makeDir(path.dirname(filePath), {fs});
+	const readFile = promisify(fs.readFile).bind(fs);
+
 	let {indent} = options;
 	let trailingNewline = '\n';
 	try {
@@ -55,10 +59,13 @@ const main = async (filePath, data, options) => {
 
 	const json = JSON.stringify(data, options.replacer, indent);
 
-	return writeFileAtomic(filePath, `${json}${trailingNewline}`, {mode: options.mode, chown: false});
+	return writeFileAtomic(filePath, `${json}${trailingNewline}`, {mode: options.mode, chown: false, fs});
 };
 
 const mainSync = (filePath, data, options) => {
+	const {fs} = options;
+	makeDir.sync(path.dirname(filePath), {fs});
+
 	let {indent} = options;
 	let trailingNewline = '\n';
 	try {
@@ -78,15 +85,9 @@ const mainSync = (filePath, data, options) => {
 
 	const json = JSON.stringify(data, options.replacer, indent);
 
-	return writeFileAtomic.sync(filePath, `${json}${trailingNewline}`, {mode: options.mode, chown: false});
+	return writeFileAtomic.sync(filePath, `${json}${trailingNewline}`, {mode: options.mode, chown: false, fs});
 };
 
-module.exports = async (filePath, data, options) => {
-	await makeDir(path.dirname(filePath), {fs});
-	return init(main, filePath, data, options);
-};
+module.exports = async (filePath, data, options) => init(main, filePath, data, options);
 
-module.exports.sync = (filePath, data, options) => {
-	makeDir.sync(path.dirname(filePath), {fs});
-	init(mainSync, filePath, data, options);
-};
+module.exports.sync = (filePath, data, options) => init(mainSync, filePath, data, options);

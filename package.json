@@ -14,7 +14,7 @@
 		"node": ">=8.3"
 	},
 	"scripts": {
-		"test": "xo && ava && tsd"
+		"test": "ava && tsd"
 	},
 	"files": [
 		"index.js",
@@ -40,10 +40,11 @@
 		"is-plain-obj": "^2.0.0",
 		"make-dir": "^3.0.0",
 		"sort-keys": "^4.0.0",
-		"write-file-atomic": "^3.0.0"
+		"write-file-atomic": "github:privatenumber/write-file-atomic#custom-fs"
 	},
 	"devDependencies": {
 		"ava": "^1.4.1",
+		"memfs": "^3.2.0",
 		"tempy": "^0.3.0",
 		"tsd": "^0.8.0",
 		"xo": "^0.25.3"
